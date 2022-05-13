@@ -83,10 +83,12 @@ namespace mqp {
 
             void consume(const Key& id) {
                 if (!queue_.empty() && consumer_) {
-                    std::scoped_lock lock{mutex_};
+                    std::unique_lock lock{mutex_};
                     if (!queue_.empty() && consumer_) {
-                        consumer_->Consume(id, queue_.front());
+                        Value val = std::move(queue_.front());
                         queue_.pop_front();
+                        lock.unlock();
+                        consumer_->Consume(id, val);
                     }
                 }
             }
